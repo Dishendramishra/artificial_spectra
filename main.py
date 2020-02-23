@@ -15,7 +15,7 @@ pixelarray = np.rot90(pixelarray, 3)
 def create_fits(filename,pixelarray,nan=False):
     if nan:
         pixelarray[pixelarray==0] = np.nan
-    fits.writeto("./fits/"+filename+".fits", pixelarray, overwrite=True)
+    fits.writeto(filename+".fits", pixelarray, overwrite=True)
 
 
 ## returns starting and ending point of all order
@@ -46,7 +46,8 @@ ff_upper = 5376
 ff_lower = 768
 
 for i,j in ol:
-    # i,j = 5633, 5730 
+    i,j = 2759, 2887
+    
     width = j-i+1
     sec = np.copy(pixelarray[i:i + width, ])
     sec_center = sec[:, ccd_center].nonzero()[0]
@@ -71,13 +72,35 @@ for i,j in ol:
     sec[lower_center + 1:, ccd_center:lower] = fill_value 
     sec[:upper_center, upper:ccd_center] = fill_value
      
-    sec[sec == 0] = np.nan
+    # sec[sec == 0] = np.nan
     
     # plt.imshow(sec)
     # print(i,sec_center, order_center)
-    create_fits("sector"+str(i)+"_"+str(j), sec)
+    create_fits("./fits/sector"+str(i)+"_"+str(j), sec)
     # break
-    # if i==3742:
-    #     break
+    # if i==3193:
+        # break
 #%%
 # Now Trace Orders and replace with wavelengths
+import os
+
+wavelengths = features_template[:,0]
+wavelengths = wavelengths/10000
+wavelengths = wavelengths.round(6)
+features = features_template[:,2]
+
+spectra = dict( (wavelengths[i],features[i]) for i in  range(len(features)))
+
+img  = fits.getdata("./fits/"+os.listdir("./fits")[0])
+img = img.round(6)
+targets = img.nonzero()
+row,col = targets[0], targets[1]
+
+# for i,v in fea
+for i in range(len(row)):
+    img[row[i],col[i]] =  spectra[img[row[i],col[i]]]
+    # print(spectra[img[row[i],col[i]]])
+
+create_fits("wavelength_fitted.fits", img,True)
+plt.plot(img[targets])
+# plt.imshow(img)
